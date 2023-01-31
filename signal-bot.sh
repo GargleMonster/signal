@@ -5,9 +5,9 @@ GROUP=""
 MESSAGE=""
 MFILE=""
 GFILE=""
-DOW=$(date +%A)
-NUMBER=0
-LINE_NUMBER=0
+SIGNALEMOJI=":signal_strength:"
+ROBOTEMOJI=":robot_face:"
+
 
 function usage() {
     echo    
@@ -39,39 +39,61 @@ function getgroup() {
 
 function getmessage() {
     NUMBER=$(wc -l $MFILE | cut -d " " -f 1)
+    DOW=$(date +%u) #$(date +%A)
+    LINENUMBER=0
+    MAXRANDOM=32767
+    DOW=$(date +%u) #$(date +%A)
+    MAX=0
+    MIN=0
 
     case $DOW in
-        Monday)
+        1)
             echo "Monday"
-            LINE_NUMBER=$(echo "scale=1; $RANDOM / 32767 * (120 - 1) + 1" | bc | cut -d "." -f 1)
-            MESSAGE=$(sed -n "${LINE_NUMBER}p" $MFILE) 
-            echo "$LINE_NUMBER is $MESSAGE"
+            MAX=120
+            MIN=1
             ;; 
-        Tuesday)
+        2)
             echo "Tuesday"
-            LINE_NUMBER=$(echo "scale=1; $RANDOM / 32767 * (242 - 122) + 122" | bc | cut -d "." -f 1)
-            MESSAGE=$(sed -n "${LINE_NUMBER}p" $MFILE) 
-            echo "$LINE_NUMBER is $MESSAGE"
+            MAX=242
+            MIN=122
             ;; 
-        Wednesday)
+        3)
             echo "Wednesday"
-            LINE_NUMBER=$(echo "scale=1; $RANDOM / 32767 * (363 - 243) + 243" | bc | cut -d "." -f 1)
-            MESSAGE=$(sed -n "${LINE_NUMBER}p" $MFILE) 
-            echo "$LINE_NUMBER is $MESSAGE"
+            MAX=363
+            MIN=243
             ;; 
-        Thursday)
+        4)
             echo "Thursday"
-            LINE_NUMBER=$(echo "scale=1; $RANDOM / 32767 * (484 - 364) + 364" | bc | cut -d "." -f 1)
-            MESSAGE=$(sed -n "${LINE_NUMBER}p" $MFILE) 
-            echo "$LINE_NUMBER is $MESSAGE"
+            MAX=484
+            MIN=364
             ;; 
-        Friday)
+        5)
             echo "Friday"
-            LINE_NUMBER=$(echo "scale=1; $RANDOM / 32767 * (605 - 485) + 485" | bc | cut -d "." -f 1)
-            MESSAGE=$(sed -n "${LINE_NUMBER}p" $MFILE) 
-            echo "$LINE_NUMBER is $MESSAGE"
+            MAX=605
+            MIN=485
             ;; 
     esac
+
+    LINENUMBER=$(echo "scale=1; $RANDOM / $MAXRANDOM * ($MAX - $MIN) + $MIN" | bc | cut -d "." -f 1)
+    VIRGIN=$(sed -n "${LINENUMBER}p" $MFILE | grep -Eo "^[0-1]{1}")
+
+    while [[ "$VIRGIN" -eq "1" ]]; do
+        if [[ "$LINENUMBER" -eq "$NUMBER" ]]; then
+            LINENUMBER=1
+        fi
+
+        LINENUMBER=$(( LINENUMBER + 1 ))
+
+        VIRGIN=$(sed -n "${LINENUMBER}p" $MFILE | grep -Eo "^[0-1]{1}")
+    done
+
+    MESSAGE=$(sed -n "${LINENUMBER}p" $MFILE | grep -Eo ":{1}[0-9a-z_]*:{1}")
+    TEMPMSG=$(sed -n "${LINENUMBER}p" $MFILE)
+    REPL="${TEMPMSG:0:2}"
+    cat $MFILE > backup.txt
+    sed "$LINENUMBER s/^$REPL/1:/" $MFILE > "$MFILE.bak"
+    cp "$MFILE.bak" "$MFILE"
+    echo "$LINENUMBER is $MESSAGE"
 }
 
 
@@ -92,30 +114,38 @@ function sendmessage() {
 
     # SEARCH FOR GROUP
     xdotool type "$1"
-    sleep 0.5
+    sleep 1
 
     # SEND TAB AND ENTER TO SELECT GROUP
     xdotool key --window "$WINDOWID" "Tab"
-    sleep 0.5
+    sleep 1
     xdotool key --window "$WINDOWID" "Return"
-    sleep 0.5
+    sleep 1
     xdotool mousemove --sync 456 639
 
     # TYPE IN SMILEY FACE
     xdotool type --window "$WINDOWID" "$2"
+    sleep 1
+    xdotool type --window "$WINDOWID" "  -  "
+    sleep 1
+    xdotool type --window "$WINDOWID" "$SIGNALEMOJI"
+    sleep 1
+    xdotool type --window "$WINDOWID" "$ROBOTEMOJI"
+    sleep 1
 
     # SEND EMOJI
     xdotool key --window "$WINDOWID" "Return"
     sleep 11
-    echo "signal bot out!"
 
-    # KILL SIGNAL
+    # KILL SIGNAL 
+    echo "signal bot out!"
     kill -9 "$SIGNALPID"
 }
 
 
 function issignalrunning() {
-    LOGTIME=$(grep "https://storage.signal.org/v1/storage/manifest/version/" ~/.config/Signal/logs/app.log | tail -1 | cut -d ":" -f 3-4 | sed 's/"//g')
+    
+    LOGTIME=$(grep "App loaded" ~/.config/Signal/logs/main.log | tail -1 | cut -d ":" -f 3-4 | sed 's/"//g')
     CURRENTTIME=$(date -u +"%Y-%m-%dT%H:%M")
     
     if [[ "$LOGTIME" == "$CURRENTTIME" ]]; then
@@ -143,7 +173,7 @@ function main() {
 
     if [[ "$?" -eq 0 ]]; then
         echo "Signal is running ... I will send this $MESSAGE to $GROUP"
-        sleep 1
+        sleep 3
         sendmessage "$GROUP" "$MESSAGE"
     else
         echo -ne "Signal is not running."
@@ -154,6 +184,20 @@ function main() {
             echo -ne "."
             sleep 1
         done
+        echo -e ".\nSignal is running ... sleeping until 0449"
+        sleep 10
+
+        ## THIS BLOCK IS NEW, IF IT BREAKS TOMORROW REMOVE
+        CURRENTTIME=$(date +%M)
+        STOPTIME="49"
+        while [[ "$CURRENTTIME" < "$STOPTIME" ]]; do
+            sleep 15
+            echo "Waiting ..."
+            CURRENTTIME=$(date +%M)
+        done     
+        ## END BLOCK
+
+        echo "I will send this $MESSAGE to $GROUP at $(date)"
         sendmessage "$GROUP" "$MESSAGE"
     fi
 }
