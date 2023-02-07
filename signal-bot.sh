@@ -42,7 +42,6 @@ function getmessage() {
     DOW=$(date +%u) #$(date +%A)
     LINENUMBER=0
     MAXRANDOM=32767
-    DOW=$(date +%u) #$(date +%A)
     MAX=0
     MIN=0
 
@@ -90,7 +89,6 @@ function getmessage() {
     MESSAGE=$(sed -n "${LINENUMBER}p" $MFILE | grep -Eo ":{1}[0-9a-z_]*:{1}")
     TEMPMSG=$(sed -n "${LINENUMBER}p" $MFILE)
     REPL="${TEMPMSG:0:2}"
-    cat $MFILE > backup.txt
     sed "$LINENUMBER s/^$REPL/1:/" $MFILE > "$MFILE.bak"
     cp "$MFILE.bak" "$MFILE"
     echo "$LINENUMBER is $MESSAGE"

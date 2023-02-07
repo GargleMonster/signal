@@ -9,7 +9,7 @@
 0:anchor:
 0:angel:
 0:anger:
-0:angry:
+1:angry:
 0:anguished:
 0:ant:
 0:apple:
@@ -155,7 +155,7 @@
 0:crocodile:
 0:crossed_flags:
 0:crown:
-0:cry:
+1:cry:
 0:cupid:
 0:curly_loop:
 0:curry:
@@ -265,7 +265,7 @@
 0:heartbeat:
 0:heart_decoration:
 1:heartpulse:
-0:hearts:
+1:hearts:
 0:helicopter:
 0:herb:
 0:hibiscus:
@@ -458,7 +458,7 @@
 0:scream:
 0:scream_cat:
 1:scroll:
-0:seat:
+1:seat:
 0:secret:
 0:seedling:
 0:seven:
@@ -530,7 +530,7 @@
 0:thought_balloon:
 0:three:
 0:thumbsdown:
-0:thumbsup:
+1:thumbsup:
 0:ticket:
 0:tiger:
 0:tiger2:
