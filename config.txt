@@ -1,1 +1,1 @@
-GROUP="JOCCP3"
+GROUP=""
