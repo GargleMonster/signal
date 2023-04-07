@@ -1,4 +1,1 @@
-# signal
-signal
-
-Testing the pull f(x)
+Sends a message on your signal account to a specified group.
