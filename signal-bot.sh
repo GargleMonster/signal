@@ -1,10 +1,12 @@
 #!/bin/bash
 
+
 SIGNAL=1
 GROUP=""
 MESSAGE=""
 MFILE=""
 GFILE=""
+ADD_MESSAGE=""
 SIGNALEMOJI=":signal_strength:"
 ROBOTEMOJI=":robot_face:"
 
@@ -58,6 +60,7 @@ function getmessage() {
             ;; 
         3)
             echo "Wednesday"
+            ADD_MESSAGE=":camel:"
             MAX=363
             MIN=243
             ;; 
@@ -68,9 +71,10 @@ function getmessage() {
             ;; 
         5)
             echo "Friday"
+            ADD_MESSAGE=":saluting_face: :us:"
             MAX=605
             MIN=485
-            ;; 
+            ;;
     esac
 
     LINENUMBER=$(echo "scale=1; $RANDOM / $MAXRANDOM * ($MAX - $MIN) + $MIN" | bc | cut -d "." -f 1)
@@ -78,12 +82,13 @@ function getmessage() {
 
     while [[ "$VIRGIN" -eq "1" ]]; do
         if [[ "$LINENUMBER" -eq "$NUMBER" ]]; then
-            LINENUMBER=1
+            LINENUMBER=0
         fi
 
         LINENUMBER=$(( LINENUMBER + 1 ))
 
         VIRGIN=$(sed -n "${LINENUMBER}p" $MFILE | grep -Eo "^[0-1]{1}")
+        echo "collision"
     done
 
     MESSAGE=$(sed -n "${LINENUMBER}p" $MFILE | grep -Eo ":{1}[0-9a-z_]*:{1}")
@@ -97,17 +102,17 @@ function getmessage() {
 
 function sendmessage() {
     # GRAB SIGNAL PID
-    SIGNALPID=$(ps -aux | grep "signal-desktop" | head -1 | grep -Eo "matthew\s+[0-9]+" | grep -Eo "[0-9]+")
+    SIGNALPID=$(ps -aux | grep "signal-desktop" | head -2 | tail -1 | grep -Eo "server\s+[0-9]+" | grep -Eo "[0-9]+")
     echo "Signal PID: $SIGNALPID"
 
     # GRAB WINDOWID OF SIGNAL APP
-    WINDOWID=$(xdotool search -all --pid "$SIGNALPID" | tail -1)
+    WINDOWID=$(xdotool search --pid "$SIGNALPID" | tail -1)
     echo "Signal WINDOWID: $WINDOWID"
 
     # ACTIVATE SIGNAL WINDOW
     xdotool windowmove "$WINDOWID" 0 0
     xdotool windowactivate --sync "$WINDOWID"
-    xdotool mousemove --sync 120 150 
+    xdotool mousemove --sync 126 140 
     xdotool click --window "$WINDOWID" 1 
 
     # SEARCH FOR GROUP
@@ -119,7 +124,7 @@ function sendmessage() {
     sleep 1
     xdotool key --window "$WINDOWID" "Return"
     sleep 1
-    xdotool mousemove --sync 456 639
+    xdotool mousemove --sync 392 641
 
     # TYPE IN SMILEY FACE
     xdotool type --window "$WINDOWID" "$2"
@@ -131,6 +136,13 @@ function sendmessage() {
     xdotool type --window "$WINDOWID" "$ROBOTEMOJI"
     sleep 1
 
+    if [[ ! -z "$ADD_MESSAGE" ]]; then
+        xdotool key --window "$WINDOWID" "Shift+Return"
+        xdotool key --window "$WINDOWID" "Shift+Return"
+        xdotool type --window "$WINDOWID" "$ADD_MESSAGE"
+        sleep 1
+    fi
+
     # SEND EMOJI
     xdotool key --window "$WINDOWID" "Return"
     sleep 11
@@ -141,8 +153,7 @@ function sendmessage() {
 }
 
 
-function issignalrunning() {
-    
+function issignalrunning() {    
     LOGTIME=$(grep "App loaded" ~/.config/Signal/logs/main.log | tail -1 | cut -d ":" -f 3-4 | sed 's/"//g')
     CURRENTTIME=$(date -u +"%Y-%m-%dT%H:%M")
     
@@ -176,7 +187,7 @@ function main() {
     else
         echo -ne "Signal is not running."
         echo -ne " Starting."
-        gnome-terminal -- bash -c "signal-desktop" &
+        xterm -e "signal-desktop" &
         while [[ "$SIGNAL" -eq 1 ]]; do 
             issignalrunning
             echo -ne "."
@@ -185,7 +196,6 @@ function main() {
         echo -e ".\nSignal is running ... sleeping until 0449"
         sleep 10
 
-        ## THIS BLOCK IS NEW, IF IT BREAKS TOMORROW REMOVE
         CURRENTTIME=$(date +%M)
         STOPTIME="49"
         while [[ "$CURRENTTIME" < "$STOPTIME" ]]; do
@@ -193,7 +203,6 @@ function main() {
             echo "Waiting ..."
             CURRENTTIME=$(date +%M)
         done     
-        ## END BLOCK
 
         echo "I will send this $MESSAGE to $GROUP at $(date)"
         sendmessage "$GROUP" "$MESSAGE"
